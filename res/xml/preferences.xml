@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="GOOGLE DRIVE">
+        <Preference android:title="НАСТРОЙКИ" android:summary="настройки для доступа и загрузки файлов"
+                    android:key="@string/key_settings_google_drive"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="НАСТРОЙКИ КАМЕРЫ" android:summary="установка свойств камеры">
+        <PreferenceScreen android:key="@string/key_camera_screen" android:title="НАСТРОЙКИ КАМЕРЫ"
+                          android:summary="настройки камеры разрешение, фокус ...">
+            <ListPreference android:title="ЦВЕТ" android:summary="Цветовой эфект"
+                            android:key="@string/key_color_effect"/>
+            <ListPreference android:title="УДАЛЕНИЕ ПОЛОС" android:summary="Полосы"
+                            android:key="@string/key_anti_banding"/>
+            <ListPreference android:title="ВСПЫШКА" android:summary="Вспышка" android:key="@string/key_flash_mode"/>
+            <ListPreference android:title="ФОКУС" android:summary="Установка фокуса"
+                            android:key="@string/key_focus_mode"/>
+            <ListPreference android:title="СЦЕНА" android:summary="Установка сцены"
+                            android:key="@string/key_scene_mode"/>
+            <ListPreference android:title="БАЛАНС БЕЛОГО" android:summary="Установка баланса белого"
+                            android:key="@string/key_white_mode"/>
+            <ListPreference android:title="ЭКСПОЗИЦИЯ" android:summary="Установка экспозициии"
+                            android:key="@string/key_exposure"/>
+            <PreferenceScreen android:title="РАЗМЕР КАРТИНКИ" android:summary="Выбор размера разрешения картинки"
+                              android:key="@string/key_category_picture_size">
+                <ListPreference android:title="РАЗМЕР КАРТИНКИ" android:summary="Установка размера картинки"
+                                android:key="@string/key_pic_size"/>
+                <Preference android:key="@string/key_pic_size_width" android:title="Ширина" android:enabled="false"/>
+                <Preference android:key="@string/key_pic_size_height" android:title="Высота" android:enabled="false"/>
+            </PreferenceScreen>
+            <ListPreference android:key="@string/key_rotation" android:title="ПОВОРОТ"
+                            android:entries="@array/date_rotate" android:entryValues="@array/date_rotate"/>
+        </PreferenceScreen>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="НАСТРОЙКИ">
+        <EditTextPreference android:title="ПЕРИОД" android:gravity="right" android:dialogTitle="период в секундах"
+                            android:summary="Время периода сьемки сек" android:key="@string/key_period_take"
+                            android:inputType="numberDecimal"/>
+        <EditTextPreference android:title="КАЧЕСТВО ФОТО" android:gravity="right"
+                            android:dialogTitle="качество в процентах" android:summary="Качество"
+                            android:key="@string/key_quality_pic" android:inputType="number"/>
+        <Preference android:title="О программе" android:key="@string/key_about"/>
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="GOOGLE DRIVE">
+        <Preference android:title="ACCOUNT NAME" android:key="@string/key_account_name"/>
+        <EditTextPreference android:title="FOLDER ID" android:key="@string/key_folder_id" android:inputType="text"/>
+    </PreferenceCategory>
+</PreferenceScreen>

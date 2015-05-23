@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://C:/android/sdk/extras/android/support/v4/android-support-v4.jar!/" />
+      <root url="jar://C:/android/sdk/extras/google/google_play_services/libproject/google-play-services_lib/libs/google-play-services.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-api-client-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-api-services-drive-v2-rev155-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-api-client-android-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-http-client-android-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-http-client-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-http-client-gson-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-http-client-jackson-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/google-oauth-client-1.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jackson-core-asl-1.9.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

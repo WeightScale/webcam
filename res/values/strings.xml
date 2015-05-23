@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">webcam</string>
+
+    <string-array name="date_rotate">
+        <item>"0"</item>
+        <item>"90"</item>
+        <item>"180"</item>
+        <item>"270"</item>
+    </string-array>
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_settings">settings</string>
+
+    <string name="key_folder_id">folder_id</string>
+    <string name="key_folder_name">folder_name</string>
+    <string name="key_folder_parent_id">folder_parent_id</string>
+    <string name="key_folder_parent_name">folder_parent_name</string>
+    <string name="key_dialog_folder_id">dialog_folder_id</string>
+    <string name="key_account_name">account_name</string>
+    <string name="key_account_value">account_value</string>
+    <string name="key_color_effect">color_effect</string>
+    <string name="key_anti_banding">anti_banding</string>
+    <string name="key_flash_mode">flash_mode</string>
+    <string name="key_focus_mode">focus_mode</string>
+    <string name="key_scene_mode">scene_mode</string>
+    <string name="key_white_mode">white_mode</string>
+    <string name="key_exposure">exposure</string>
+    <string name="key_pic_size">pic_size</string>
+    <string name="key_category_picture_size">category_picture_size</string>
+    <string name="key_pic_size_width">pic_size_width</string>
+    <string name="key_pic_size_height">pic_size_height</string>
+    <string name="key_period_take">period_take</string>
+    <string name="key_quality_pic">quality_pic</string>
+    <string name="key_about">about</string>
+    <string name="key_flag_take_single">flag_take_single</string>
+    <string name="key_settings">settings</string>
+    <string name="key_rotation">rotation</string>
+    <string name="key_camera_screen">key_camera_screen</string>
+    <string name="key_settings_google_drive">settings_google_drive</string>
+</resources>

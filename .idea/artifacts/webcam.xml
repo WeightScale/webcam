@@ -1,0 +1,19 @@
+<component name="ArtifactManager">
+  <artifact type="apk" name="webcam">
+    <output-path>$PROJECT_DIR$/out/artifacts/webcam</output-path>
+    <properties id="android-properties">
+      <options>
+        <option name="keyAlias" value="androiddebugkey" />
+        <option name="keyPassword" value="YW5kcm9pZA==" />
+        <option name="keyStorePassword" value="YW5kcm9pZA==" />
+        <option name="keyStoreUrl" value="file://$USER_HOME$/.android/debug.keystore" />
+        <option name="signingMode" value="DEBUG_WITH_CUSTOM_CERTIFICATE" />
+      </options>
+    </properties>
+    <root id="archive" name="webcam.apk">
+      <element id="archive" name="webcam.jar">
+        <element id="module-output" name="webcam" />
+      </element>
+    </root>
+  </artifact>
+</component>
