@@ -22,17 +22,23 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Kostya on 20.12.2014.
+/** Класс для рабоы с google disk
+ * @author Kostya
  */
 public class UtilityDriver {
 
     static final String folderMIME = "application/vnd.google-apps.folder";
     public static final int REQUEST_AUTHORIZATION = 1990;
 
+    /** Удомтоверение */
     private GoogleAccountCredential credential;
+    /** Сервис Google drive */
     private Drive driveService;
 
+    /** Конструктор
+     * @param context Контекст
+     * @param accountName Имя учетной записи.
+     */
     public UtilityDriver(Context context, String accountName) {
 
         credential = GoogleAccountCredential.usingOAuth2(context, Collections.singleton(DriveScopes.DRIVE));
@@ -41,6 +47,10 @@ public class UtilityDriver {
 
     }
 
+    /** Получить сервис google drive.
+     * @param credential Удостоверение учетной записи.
+     * @return Google Drive.
+     */
     private Drive getDriveService(GoogleAccountCredential credential) {
         return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new JacksonFactory(), credential).build();
     }
@@ -61,7 +71,6 @@ public class UtilityDriver {
             listRequest.setQ(q);
 
         do {
-
             FileList fList = listRequest.execute();
             result.addAll(fList.getItems());
             listRequest.setPageToken(fList.getNextPageToken());
@@ -104,6 +113,14 @@ public class UtilityDriver {
         return driveService.files().insert(body, fContent).execute();
     }
 
+    /** Выгрузить фаил на drive.
+     * @param title Имя файла.
+     * @param parentId Индекс родительской папки google drive.
+     * @param mime Миме тип.
+     * @param fName Содержание файла для загрузки.
+     * @return Загруженый фаил.
+     * @throws IOException Ошибки при загрузке.
+     */
     public File uploadFile(String title, /*String desc,*/ String parentId, String mime, java.io.File fName) throws IOException {
 
         com.google.api.services.drive.model.File body = new com.google.api.services.drive.model.File();
@@ -124,6 +141,12 @@ public class UtilityDriver {
         return driveService.files().insert(body, fContent).execute();
     }
 
+    /** Создание папки.
+     * @param parentId Индек родительской папки.
+     * @param folderName Имя папки.
+     * @return Фаил папки.
+     * @throws IOException Ошибки при создании.
+     */
     public File createFolder(String parentId, String folderName) throws IOException {
         File body = new File();
         body.setTitle(folderName);
@@ -153,6 +176,12 @@ public class UtilityDriver {
 
     }
 
+    /** Полусить папку.
+     * @param folder Имя папки.
+     * @param parentId Индек родительской папки.
+     * @return Папку.
+     * @throws IOException Ошибки при получении.
+     */
     public File getFolder(String folder, String parentId) throws IOException {
         List<com.google.api.services.drive.model.File> result = new ArrayList<com.google.api.services.drive.model.File>();
         com.google.api.services.drive.Drive.Files.List listRequest = driveService.files().list();

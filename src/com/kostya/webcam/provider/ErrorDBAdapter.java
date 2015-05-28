@@ -1,6 +1,5 @@
-package com.kostya.webcam;
+package com.kostya.webcam.provider;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,13 +8,10 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.telephony.TelephonyManager;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-class ErrorDBAdapter {
+public class ErrorDBAdapter {
 
     private final Context context;
     //private SQLiteDatabase db;

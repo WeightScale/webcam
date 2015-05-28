@@ -138,51 +138,40 @@ public class WebCamService extends Service {
                         account = account1;
                         break;
                     }
-
                 }
 
                 if (account == null) {
                     //todo проверить account на null
                 }
 
-                sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
-                int count = 0, time_wait = 0;
-                while (!isCancelled()) {
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException e) {
-                    }
-                    if (!internet.checkInternetConnection()) {
-                        continue;
-                    }
-
-                    Bundle authTokenBundle = null;
-                    try {
-                        //AccountManagerFuture<Bundle> accFut = AccountManager.get(getBaseContext()).getAuthToken(account,"oauth2:" + "https://www.googleapis.com/auth/drive",null,this,null,null);
-                        AccountManager accountManager = AccountManager.get(getBaseContext());
-                        AccountManagerFuture<Bundle> accountManagerFuture = accountManager.getAuthToken(account, "oauth2:" + "https://www.googleapis.com/auth/drive", null, null, null, null);
-                        authTokenBundle = accountManagerFuture.getResult();
-                        final String token = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
-                        am.invalidateAuthToken("com.google", token);
-                        GoogleCredential credential = new GoogleCredential.Builder()
-                                .setTransport(new NetHttpTransport())
-                                .setJsonFactory(new JacksonFactory())
-                                .setClientSecrets(CLIENT_ID, CLIENT_SECRET)
-                                .build().setAccessToken(token);
-                        drive = new Drive.Builder(new NetHttpTransport(), new JacksonFactory(), credential).build();
-                        break;
-                    } catch (OperationCanceledException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (AuthenticatorException e) {
-                        e.printStackTrace();
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
+                if (!getConnection(10000, 10)) {
+                    //mHandler.sendEmptyMessage(HANDLER_FINISH_THREAD); //todo
+                    return null;
+                }
+                Bundle authTokenBundle = null;
+                try {
+                    //AccountManagerFuture<Bundle> accFut = AccountManager.get(getBaseContext()).getAuthToken(account,"oauth2:" + "https://www.googleapis.com/auth/drive",null,this,null,null);
+                    AccountManager accountManager = AccountManager.get(getBaseContext());
+                    AccountManagerFuture<Bundle> accountManagerFuture = accountManager.getAuthToken(account, "oauth2:" + "https://www.googleapis.com/auth/drive", null, null, null, null);
+                    authTokenBundle = accountManagerFuture.getResult();
+                    final String token = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
+                    am.invalidateAuthToken("com.google", token);
+                    GoogleCredential credential = new GoogleCredential.Builder()
+                            .setTransport(new NetHttpTransport())
+                            .setJsonFactory(new JacksonFactory())
+                            .setClientSecrets(CLIENT_ID, CLIENT_SECRET)
+                            .build().setAccessToken(token);
+                    drive = new Drive.Builder(new NetHttpTransport(), new JacksonFactory(), credential).build();
+                } catch (OperationCanceledException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (AuthenticatorException e) {
+                    e.printStackTrace();
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
             if (!isCancelled())
@@ -195,6 +184,19 @@ public class WebCamService extends Service {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             closed = true;
+        }
+
+        private boolean getConnection(int timeout, int countConnect) {
+            //int count = 0;
+            while (!isCancelled() && countConnect != 0) {
+                sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
+                try { Thread.sleep(timeout); } catch (InterruptedException ignored) { }
+
+                if (Internet.isOnline())
+                    return true;
+                countConnect--;
+            }
+            return false;
         }
     }
 
@@ -213,10 +215,7 @@ public class WebCamService extends Service {
             //preferences = new Preferences(getSharedPreferences(Preferences.PREF_SETTINGS,Context.MODE_PRIVATE));
             while (!isCancelled()) {
                 takeImage();
-                try {
-                    Thread.sleep(Integer.parseInt(preferences.read(getString(R.string.key_period_take), "10")) * 1000);
-                } catch (InterruptedException e) {
-                }
+                try { Thread.sleep(Integer.parseInt(preferences.read(getString(R.string.key_period_take), "10")) * 1000); } catch (InterruptedException e) { }
             }
             closed = true;
             return null;
@@ -245,24 +244,32 @@ public class WebCamService extends Service {
                 if (files == null)
                     continue;
                 if (files.length > 0) {
-                    sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
-                    while (!isCancelled()) {
 
-                        try {
-                            Thread.sleep(20);
-                        } catch (InterruptedException e) {
-                        }
-                        if (!internet.checkInternetConnection())
-                            continue;
-
-                        for (File file1 : files) {
-                            saveFileToDrive(file1);//todo
-                        }
-                        break;
+                    if (!getConnection(10000, 10)) {
+                        //mHandler.sendEmptyMessage(HANDLER_FINISH_THREAD); //todo
+                        return null;
                     }
+                    for (File file1 : files) {
+                        saveFileToDrive(file1);//todo
+                    }
+
                 }
+                try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(); }
             }
             return null;
+        }
+
+        private boolean getConnection(int timeout, int countConnect) {
+            //int count = 0;
+            while (!isCancelled() && countConnect != 0) {
+                sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
+                try { Thread.sleep(timeout); } catch (InterruptedException ignored) { }
+
+                if (Internet.isOnline())
+                    return true;
+                countConnect--;
+            }
+            return false;
         }
     }
 

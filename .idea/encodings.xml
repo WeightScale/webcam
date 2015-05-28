@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" defaultCharsetForPropertiesFiles="UTF-8">
-    <file url="file://$PROJECT_DIR$/src/com/kostya/webcam/ErrorDBAdapter.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/com/kostya/webcam/SendDataService.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/com/kostya/webcam/provider/ErrorDBAdapter.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/temp/camera.png" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/temp/camera1.png" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />

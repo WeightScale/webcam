@@ -17,10 +17,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * Created by Kostya on 01.07.14.
+/** Сервис Обработчик СМС
+ * @author Kostya
  */
-@SuppressWarnings("DefaultFileTemplate")
 public class SmsService extends Service {
     //static boolean take_single_flag = true;
     //BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
@@ -32,7 +31,9 @@ public class SmsService extends Service {
     private final String VALUE_TAKE_NONSTOP = "nonstop";
     private final String VALUE_TAKE_IFSEND = "ifsend";
 
+    /** The constant CMD_GET_PREF.  */
     public final static String CMD_GET_PREF = "get_pref";
+    /** The constant CMD_BLUETOOTH.  */
     public final static String CMD_BLUETOOTH = "bluetooth";
 
 
@@ -55,7 +56,9 @@ public class SmsService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+        /** Цель имеет параметры */
         if (intent.getExtras() != null /*&& intent.getAction()!=null*/) {
+            /** Получить параметр*/
             String command = intent.getExtras().getString(SMSIncomingService.KEY_BODY);
             String address = intent.getExtras().getString(SMSIncomingService.KEY_ADDRESS);
             if (command != null) {
@@ -78,6 +81,11 @@ public class SmsService extends Service {
         return START_NOT_STICKY;
     }
 
+    /** Выполнить команду.
+     * @param reader the reader
+     * @param address the address
+     * @return the boolean
+     */
     boolean executeCommand(String reader, String address) {
         String[] parts = reader.split(" ", 0);
         SimpleCommandLineParser commands = new SimpleCommandLineParser(parts, "=");

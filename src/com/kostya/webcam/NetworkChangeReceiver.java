@@ -13,7 +13,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
 
         //String intentAction = intent.getAction();
-        Internet.flagIsInternet = Internet.checkInternetConnection(context);
+        Internet.flagIsInternet = Internet.isOnline();
         //String status = NetworkUtil.getConnectivityStatusString(context);
 
 

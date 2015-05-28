@@ -4,21 +4,17 @@ import android.accounts.*;
 import android.app.*;
 import android.content.*;
 import android.os.*;
-import com.google.android.gms.auth.*;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.drive.*;
-import com.google.api.services.drive.model.*;
+import com.kostya.webcam.provider.ErrorDBAdapter;
 
 import java.io.*;
 import java.io.File;
 import java.util.*;
 
-/**
- * Created by Kostya on 25.07.14.
+/** Сервис отсылает данные
+ *  @author Kostya
  */
 public class SendDataService extends Service {
     private final ThreadConnectDisk threadConnectDisk = new ThreadConnectDisk(this);
@@ -74,14 +70,23 @@ public class SendDataService extends Service {
         while (!threadSendToDisk.closed) ;
     }
 
+    /** Сохраняем фаил на Google drive.
+     * @param fileContent Фаил который нужно сохранить.
+     * @param parentId Родительский индекс папки Google disk.
+     * @return true - если файл загружен.
+     * @throws Exception Ошибки сохранения файла.
+     */
     private boolean saveFileToDrive(final File fileContent, String parentId) throws Exception {
 
         try {
-
+            /** Проверяе фаил */
             if (!fileContent.exists())
                 return false;
+            /** Создаем контента экземпляр файла для закрузки*/
             FileContent mediaContent = new FileContent("image/jpeg", fileContent);
-            if (mediaContent.getLength() == 0) {  //не содержит контент
+            /**Не содержит контент */
+            if (mediaContent.getLength() == 0) {
+                /** Фаил удаляем */
                 if (!fileContent.delete()) {
                     new ErrorDBAdapter(this).insertNewEntry("512", "Невозможно удалить медиоконтент " + fileContent.getPath());
                 }
@@ -97,8 +102,12 @@ public class SendDataService extends Service {
             /*com.google.api.services.drive.model.File file = utilityDriver.uploadFile(fileContent.getName()
                     ,preferences.read(getString(R.string.key_folder_id), null)
                     ,"image/jpeg",fileContent);*/
+
+            /** Загружаем фаил на диск */
             com.google.api.services.drive.model.File file = utilityDriver.uploadFile(fileContent.getName(), parentId, "image/jpeg", fileContent);
+            /** Фаил загружен на диск */
             if (file != null) {
+                /** Можно удалить фаил с временной папки */
                 if (!fileContent.delete()) {
                     new ErrorDBAdapter(this).insertNewEntry("513", "Невозможно удалить медиоконтент " + fileContent.getPath());
                 }
@@ -119,6 +128,9 @@ public class SendDataService extends Service {
         return false;
     }
 
+    /**
+     *  Процесс для соединения с Google disk
+     */
     public class ThreadConnectDisk extends AsyncTask<Void, Long, Boolean> {
         private boolean closed = true;
 
@@ -138,9 +150,11 @@ public class SendDataService extends Service {
         protected Boolean doInBackground(Void... params) {
 
             if (drive == null) {
+                /** Экземпляр менеджера учетных записей */
                 AccountManager accountManager = (AccountManager) getSystemService(ACCOUNT_SERVICE);
-
+                /** Получаем учетные записи google */
                 Account[] accounts = accountManager.getAccountsByType("com.google");
+                /** Учетных записей нет */
                 if (accounts.length == 0) {
                     new ErrorDBAdapter(context).insertNewEntry("501", "Нет accounts of type com.google");
                     startActivityParameter("502", "Добавить account в google.com");
@@ -149,13 +163,14 @@ public class SendDataService extends Service {
                 }
 
                 Account account = null;
+                /** Ищем учетную запись сохраненную в настройках*/
                 for (Account acc : accounts) {
                     if (acc.name.equalsIgnoreCase(preferences.read(getString(R.string.key_account_name), ""))) {
                         account = acc;
                         break;
                     }
                 }
-
+                /** Если записи в настройках нет */
                 if (account == null) {
                     new ErrorDBAdapter(context).insertNewEntry("502", "Невыбран account в пункте настроек <account name>");
                     startActivityParameter("502", "ВЫБЕРИТЕ ACCOUNT NAME!!!");
@@ -167,10 +182,7 @@ public class SendDataService extends Service {
 
                     int count = 0, time_wait = 0;
                     while (!isCancelled()) {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException e) {
-                        }
+                        try { Thread.sleep(200); } catch (InterruptedException e) { }
                         if (!Internet.flagIsInternet) {
                             if (time_wait++ > 150) {
                                 new ErrorDBAdapter(context).insertNewEntry("508", "Time out соединения с интернетоом" + String.valueOf(time_wait * 200) + " мсек");
@@ -180,7 +192,8 @@ public class SendDataService extends Service {
                             continue;
                         }
                         time_wait = 0;
-                        if (count++ > 3) {                    //Колличество больше прекращяем попытки передачи
+                        /** Колличество больше прекращяем попытки передачи */
+                        if (count++ > 3) {
                             new ErrorDBAdapter(context).insertNewEntry("509", String.valueOf(count) + " Превышено количество попыток соединения с google drive");
                             return false;
                         }
@@ -240,10 +253,7 @@ public class SendDataService extends Service {
                         }*/
                     }
 
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                    }
+                    try {  Thread.sleep(2000);  } catch (InterruptedException e) { }
                 }
             }
             if (isCancelled())
@@ -265,6 +275,7 @@ public class SendDataService extends Service {
             }
             closed = true;
         }
+
     }
 
     public class ThreadSendToDisk extends AsyncTask<Void, Long, Void> {

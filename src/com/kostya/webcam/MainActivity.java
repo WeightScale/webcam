@@ -20,7 +20,9 @@ public class MainActivity extends Activity {
         //setContentView(R.layout.main);
         //startService(new Intent(this, WebCamService.class));
         //startService(new Intent(this, TakeService.class));
+        /** Запускае сервис который отсылает данные */
         startService(new Intent(this, SendDataService.class));
+        /** Запускаем сервис для приема смс комманд */
         startService(new Intent(this, SMSIncomingService.class));
     }
 
@@ -35,7 +37,7 @@ public class MainActivity extends Activity {
                         new Preferences(getSharedPreferences(getString(R.string.pref_settings), Context.MODE_PRIVATE)).write(getString(R.string.key_account_name), accountName);
                     }
                 }
-                break;
+            break;
         }
     }
 
@@ -51,12 +53,12 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
             case R.id.preferences:
                 startActivity(new Intent(this, ActivityPreferences.class));
-                break;
+            break;
             case R.id.exit:
                 closedService();
                 finish();
                 //System.exit(0);
-                break;
+            break;
         }
         return true;
     }
@@ -70,7 +72,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 
     void closedService() {

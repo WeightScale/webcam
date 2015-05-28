@@ -2,25 +2,25 @@ package com.kostya.webcam;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
 import android.hardware.Camera;
 import android.os.Environment;
 import android.os.PowerManager;
+import com.kostya.webcam.provider.ErrorDBAdapter;
 
 import java.io.File;
 import java.util.List;
 
-/**
- * Created by Kostya on 04.08.14.
+/** Класс Main
+ * @author Kostya
  */
 public class Main extends Application {
     private PowerManager.WakeLock wakeLock;
     private Camera camera = null;
     public static Camera.Parameters parameters = null;
     public static File path;
+    /** Локальная папка для временного хранения файлов */
     public static final String LOCATE_FOLDER_PATH = "WebPhoto";
-
+    /** Время поправки для таймера */
     public static long error_time_take = 0;
 
     @Override
@@ -30,22 +30,24 @@ public class Main extends Application {
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
         wakeLock.acquire();
-        // проверяем доступность SD
+        /** проверяем доступность SD карты*/
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             new ErrorDBAdapter(this).insertNewEntry("500", "SD-карта не доступна: " + Environment.getExternalStorageState());
             //todo что зделать если не доступна SD карта
             //return;
         }
+        /** Создаем папку для файлов */
         path = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + LOCATE_FOLDER_PATH);
-        if (!path.exists()) {//если нет папки создаем
+        /** Если нет папки тогда создаем */
+        if (!path.exists()) {
             if (!path.mkdirs()) {
                 new ErrorDBAdapter(this).insertNewEntry("500", "Path no create: " + path.getPath());
                 //todo что зделать если не создали папку
             }
         }
-
+        /** Окрываем экземпляр основной камеры */
         camera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK);
-
+        /** Получаем параметры камеры */
         parameters = camera.getParameters();
 
         camera.release();
@@ -57,6 +59,9 @@ public class Main extends Application {
         super.onTerminate();
     }
 
+    /**
+     * Загружаем параметры камеры в настройки программы
+     */
     public void load_parameters() {
 
         Preferences preferences = new Preferences(getSharedPreferences(getString(R.string.pref_settings), Context.MODE_PRIVATE));
@@ -119,6 +124,5 @@ public class Main extends Application {
             parameters.setRotation(rotation);
 
     }
-
 
 }

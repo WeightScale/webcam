@@ -47,45 +47,36 @@ public abstract class ConnectDiskAsyncTask extends AsyncTask<Void, Long, Void> {
                 }
             }
 
-            context.sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
-            int count = 0, time_wait = 0;
-            while (!isCancelled()) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                }
-                if (!internet.checkInternetConnection()) {
-                    continue;
-                }
-
-                Bundle authTokenBundle = null;
-                try {
-                    //AccountManagerFuture<Bundle> accFut = AccountManager.get(getBaseContext()).getAuthToken(account,"oauth2:" + "https://www.googleapis.com/auth/drive",null,this,null,null);
-                    AccountManager accountManager = AccountManager.get(context.getApplicationContext());
-                    AccountManagerFuture<Bundle> accountManagerFuture = accountManager.getAuthToken(account, "oauth2:" + "https://www.googleapis.com/auth/drive", null, null, null, null);
-                    authTokenBundle = accountManagerFuture.getResult();
-                    final String token = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
-                    am.invalidateAuthToken("com.google", token);
-                    GoogleCredential credential = new GoogleCredential.Builder()
-                            .setTransport(new NetHttpTransport())
-                            .setJsonFactory(new JacksonFactory())
-                            .setClientSecrets(WebCamService.CLIENT_ID, WebCamService.CLIENT_SECRET)
-                            .build().setAccessToken(token);
-                    drive = new Drive.Builder(new NetHttpTransport(), new JacksonFactory(), credential).build();
-                    break;
-                } catch (OperationCanceledException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (AuthenticatorException e) {
-                    e.printStackTrace();
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
+            if (!getConnection(10000, 10)) {
+                //mHandler.sendEmptyMessage(HANDLER_FINISH_THREAD); //todo
+                return null;
             }
+            Bundle authTokenBundle = null;
+            try {
+                //AccountManagerFuture<Bundle> accFut = AccountManager.get(getBaseContext()).getAuthToken(account,"oauth2:" + "https://www.googleapis.com/auth/drive",null,this,null,null);
+                AccountManager accountManager = AccountManager.get(context.getApplicationContext());
+                AccountManagerFuture<Bundle> accountManagerFuture = accountManager.getAuthToken(account, "oauth2:" + "https://www.googleapis.com/auth/drive", null, null, null, null);
+                authTokenBundle = accountManagerFuture.getResult();
+                final String token = authTokenBundle.get(AccountManager.KEY_AUTHTOKEN).toString();
+                am.invalidateAuthToken("com.google", token);
+                GoogleCredential credential = new GoogleCredential.Builder()
+                        .setTransport(new NetHttpTransport())
+                        .setJsonFactory(new JacksonFactory())
+                        .setClientSecrets(WebCamService.CLIENT_ID, WebCamService.CLIENT_SECRET)
+                        .build().setAccessToken(token);
+                drive = new Drive.Builder(new NetHttpTransport(), new JacksonFactory(), credential).build();
+            } catch (OperationCanceledException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (AuthenticatorException e) {
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
         if (!isCancelled()) {
             //threadSendToDisk.execute();todo
@@ -98,5 +89,18 @@ public abstract class ConnectDiskAsyncTask extends AsyncTask<Void, Long, Void> {
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         closed = true;
+    }
+
+    private boolean getConnection(int timeout, int countConnect) {
+        //int count = 0;
+        while (!isCancelled() && countConnect != 0) {
+            context.sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
+            try { Thread.sleep(timeout); } catch (InterruptedException ignored) { }
+
+            if (Internet.isOnline())
+                return true;
+            countConnect--;
+        }
+        return false;
     }
 }
