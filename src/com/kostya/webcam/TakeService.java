@@ -14,13 +14,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 
 /** Сервис сьемки фото.
  * @author Kostya
  */
 public class TakeService extends Service {
+    Timer timer;
     /** Процесс сьемки */
-    private ThreadTakePicture threadTakePicture;    //private PowerManager.WakeLock wakeLock;
+    //private ThreadTakePicture threadTakePicture;    //private PowerManager.WakeLock wakeLock;
     /** Камера */
     private Camera camera = null;
     /** Настройки */
@@ -28,16 +30,11 @@ public class TakeService extends Service {
     /** Фаил изображения */
     private File file;
     /** Флаг делается изображение */
-    private boolean f_wait_take = false;
+    private boolean fWaitTake = false;
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
     }
 
     @Override
@@ -57,17 +54,27 @@ public class TakeService extends Service {
                         boolean flag = intent.getBooleanExtra(getString(R.string.key_flag_take_single), true);
                         /** Запомнить флаг в настройках*/
                         preferences.write(getString(R.string.key_flag_take_single), flag);
-                        /** Если процесс сьемки закрыт */
-                        if (threadTakePicture.closed)
-                            /** Запустить процесс сьемки */
-                            threadTakePicture.execute();
+                        if (timer != null) {
+                            timer.cancel();
+                        }
+                        timer = new Timer();
+                        timer.schedule(new TimerTakeTask(), 10);
+                        /** Если процесс сьемки закрыт *//*
+                        if (!threadTakePicture.isStart())
+                            *//** Запустить процесс сьемки *//*
+                            threadTakePicture.start();*/
                     }
                     /** Действие цели запустить непрерывный процесс сьемки*/
                 } else if (intent.getAction().equals("start")) {
-                    /** Если процесс сьемки закрыт */
-                    if (threadTakePicture.closed)
-                    /** Запустить процесс сьемки */
-                        threadTakePicture.execute();
+                    if (timer != null) {
+                        timer.cancel();
+                    }
+                    timer = new Timer();
+                    timer.schedule(new TimerTakeTask(), 0,(Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000) + Main.error_time_take);
+                    /** Если процесс сьемки закрыт *//*
+                    if (!threadTakePicture.isStart())
+                    *//** Запустить процесс сьемки *//*
+                        threadTakePicture.start();*/
                 }
         return START_STICKY;
     }
@@ -76,7 +83,7 @@ public class TakeService extends Service {
     public void onCreate() {
         super.onCreate();
         /** Экземпляр процесса сьемки фото */
-        threadTakePicture = new ThreadTakePicture();
+        //threadTakePicture = new ThreadTakePicture();
         /** Экземпляр настроек камеры */
         preferences = new Preferences(getSharedPreferences(getString(R.string.pref_settings), Context.MODE_PRIVATE));
         /** Время задержки между кадрами */
@@ -98,15 +105,15 @@ public class TakeService extends Service {
         /** Сбрасываем настройки */
         camera.release();
         /** Загружаем новые настройки */
-        load_parameters();
+        loadParameters();
         //threadTakePicture.execute();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        threadTakePicture.cancel(true);
-        while (!threadTakePicture.closed) ;
+        //threadTakePicture.cancel();
+        //while (threadTakePicture.isStart()) ;
     }
 
     @Override
@@ -117,7 +124,7 @@ public class TakeService extends Service {
     /**
      * Загрузка параметров камеры из настроек программы.
      */
-    void load_parameters() {
+    void loadParameters() {
 
         Preferences preferences = new Preferences(getSharedPreferences(getString(R.string.pref_settings), Context.MODE_PRIVATE));
 
@@ -204,95 +211,156 @@ public class TakeService extends Service {
      */
     private void takeImage() {
         /** Пока обрабатывается фото */
-        while (f_wait_take);
-        /** Экземпляр камеры существует*/
+        while (fWaitTake);
+        /** Экземпляр камеры существует */
         if (camera != null)
             /** Сбрасываем настройки */
             camera.release();
-        /** Открываем главную камеру*/
+        /** Открываем главную камеру */
         camera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK);
         /** Загружаем настройки из программы */
         camera.setParameters(Main.parameters);
-        /** Создаем штамп времени*/
+        /** Создаем штамп времени */
         String timeStamp = new SimpleDateFormat("HH_mm_ss").format(new Date());
-        /** Создаем имя папки по дате*/
+        /** Создаем имя папки по дате */
         String folderStamp = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         //file = new File(Main.path.getPath(),timeStamp + ".jpg");
-        /** Создаем папку с именем штампа даты*/
+        /** Создаем папку с именем штампа даты */
         File folderPath = new File(Main.path.getAbsolutePath() + File.separator + folderStamp);
         /** Делаем папку */
         folderPath.mkdirs();
         /** Создаем фаил с именем штампа времени */
         file = new File(folderPath.getPath(), timeStamp + ".jpg");
-        /** Обратный вызов камеры*/
-        final Camera.PictureCallback jpegCallback = new Camera.PictureCallback() {
-            /** Фото сделано.
-             * @param data Данные изображения.
-             * @param camera Камера которая сделала изображение.
-             */
-            @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-                /** Сжимаем данные изображения*/
-                byte[] compressImage = compressImage(data);
-                try {
-                    /** Создаем поток для записи фаила в папку временного хранения*/
-                    FileOutputStream outputStream = new FileOutputStream(file.getPath());
-                    /** Записываем фаил в папку*/
-                    outputStream.write(compressImage);
-                    /** Закрываем поток*/
-                    outputStream.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                /** Закрываем камеру */
-                camera.stopPreview();
-                /** Сбрасываем настройки */
-                camera.release();
-                //wakeLock.release();
-                /** Сбрасываем флаг фото сделано*/
-                f_wait_take = false;
-            }
-        };
         /** Начать сьемку изображения */
         camera.startPreview();
         //camera.unlock();
-        /** Задержка  2 секунды для стабилизации камеры*/
+        /** Задержка  2 секунды для стабилизации камеры */
         try { Thread.sleep(2000);} catch (Exception e) {}
-        /** Установливаем флаг делаем фото*/
-        f_wait_take = true;
+        /** Установливаем флаг делаем фото */
+        fWaitTake = true;
 
         try {
             /** Сделать сьемку изображения */
             camera.takePicture(null, null, null, jpegCallback);
         } catch (Exception e) {
             try {
-                /** При ошибке сделать пересоединение*/
+                /** При ошибке сделать пересоединение */
                 camera.reconnect();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            /** Остановить сьемку*/
+            /** Остановить сьемку */
             camera.stopPreview();
-            /** Сбросить настройки*/
+            /** Сбросить настройки */
             camera.release();
         }
     }
 
+    /** Обратный вызов камеры */
+    final Camera.PictureCallback jpegCallback = new Camera.PictureCallback() {
+        /** Фото сделано.
+         * @param data Данные изображения.
+         * @param camera Камера которая сделала изображение.
+         */
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            /** Сжимаем данные изображения */
+            byte[] compressImage = compressImage(data);
+            try {
+                /** Создаем поток для записи фаила в папку временного хранения */
+                FileOutputStream outputStream = new FileOutputStream(file.getPath());
+                /** Записываем фаил в папку */
+                outputStream.write(compressImage);
+                /** Закрываем поток */
+                outputStream.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            /** Закрываем камеру */
+            camera.stopPreview();
+            /** Сбрасываем настройки */
+            camera.release();
+            //wakeLock.release();
+            /** Сбрасываем флаг фото сделано */
+            fWaitTake = false;
+        }
+
+    };
+
     /**
      * Процесс сьемки.
      */
-    public class ThreadTakePicture extends AsyncTask<Void, Long, Void> {
+    /*public class ThreadTakePicture extends Thread{
+        private boolean start;
+        private boolean cancelled;
+        *//** Таймер между сьемкой кадров *//*
+        TimerTake timerTake;
+        private boolean fSingleTake;
+
+        @Override
+        public synchronized void start() {
+            fSingleTake = preferences.read(getString(R.string.key_flag_take_single), true);
+            super.start();
+            start = true;
+        }
+
+        @Override
+        public void run() {
+            do {
+                *//** Сделать фото*//*
+                takeImage();
+                *//** Выйти из процесса и передать данные*//*
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        *//** Экземпляр таймера с новыми параметрами *//*
+                        timerTake = new TimerTake((Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000) + Main.error_time_take, (long) 1000);
+                    }
+                });
+                //_handler.updateTimer((Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000) + Main.error_time_take, (long) 1000);
+                //publishProgress((Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000) + Main.error_time_take, (long) 1000);
+                *//** Запустить таймер сьемки *//*
+                timerTake.onStart();
+                *//** Пока не сбросили процесс и таймер запущен*//*
+                while (!cancelled && timerTake.isStart()) {
+                    try { Thread.sleep(10); } catch (InterruptedException e) { e.printStackTrace(); }
+                }
+                *//** Устанавливаем флаг одиночной сьемки *//*
+                fSingleTake = preferences.read(getString(R.string.key_flag_take_single), true);
+                *//** Пока не сбросили процесс и флаг не одиночная сьемка *//*
+            } while (!cancelled && !fSingleTake);
+            *//** Пока не сбросили процесс и флаг делаем фото *//*
+            while (!cancelled && fWaitTake) ;
+            *//** Останавливаем сервис*//*
+            stopSelf();
+            start = false;
+        }
+
+        private void cancel() {
+            cancelled = true;
+        }
+
+        public boolean isStart() {
+            return start;
+        }
+
+    }*/
+
+    /**
+     * Процесс сьемки.
+     */
+    /*public class ThreadTakePicture extends AsyncTask<Void, Long, Void> {
         private boolean closed = true;
-        /** Экземпляр настроек камеры сохраненых */
+        *//** Экземпляр настроек камеры сохраненых *//*
         Preferences preferences = new Preferences(getSharedPreferences(getString(R.string.pref_settings), Context.MODE_PRIVATE));
-        /** Флаг одиночной сьемки */
+        *//** Флаг одиночной сьемки *//*
         private boolean f_single_take = preferences.read(getString(R.string.key_flag_take_single), true);
 
-        /** Таймер между сьемкой кадров */
+        *//** Таймер между сьемкой кадров *//*
         TimerTake timerTake;
-        /** Флаг стоп таймера */
+        *//** Флаг стоп таймера *//*
         boolean stop_timer = false;
 
         @Override
@@ -300,35 +368,35 @@ public class TakeService extends Service {
             super.onPreExecute();
             closed = false;
             //preferences = new Preferences(getSharedPreferences(Preferences.PREF_SETTINGS,Context.MODE_PRIVATE));
-            /** Создаем экземпляр таимера сьемки */
+            *//** Создаем экземпляр таимера сьемки *//*
             timerTake = new TimerTake(Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000, 1000);
         }
 
-        /** Процесс
+        *//** Процесс
          * @param params
          * @return
-         */
+         *//*
         @Override
         protected Void doInBackground(Void... params) {
 
             do {
-                /** Сделать фото*/
+                *//** Сделать фото*//*
                 takeImage();
-                /** Выйти из процесса и передать данные*/
+                *//** Выйти из процесса и передать данные*//*
                 publishProgress((Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000) + Main.error_time_take, (long) 1000);
-                /** Запустить таймер сьемки */
+                *//** Запустить таймер сьемки *//*
                 timerTake.onStart();
-                /** Пока не сбросили процесс и таймер запущен*/
+                *//** Пока не сбросили процесс и таймер запущен*//*
                 while (!isCancelled() && timerTake.isStart()) {
                     try { Thread.sleep(10); } catch (InterruptedException e) { e.printStackTrace(); }
                 }
-                /** Устанавливаем флаг одиночной сьемки */
+                *//** Устанавливаем флаг одиночной сьемки *//*
                 f_single_take = preferences.read(getString(R.string.key_flag_take_single), true);
-                /** Пока не сбросили процесс и флаг не одиночная сьемка */
+                *//** Пока не сбросили процесс и флаг не одиночная сьемка *//*
             } while (!isCancelled() && !f_single_take);
-            /** Пока не сбросили процесс и флаг делаем фото */
+            *//** Пока не сбросили процесс и флаг делаем фото *//*
             while (!isCancelled() && f_wait_take) ;
-            /** Останавливаем сервис*/
+            *//** Останавливаем сервис*//*
             stopSelf();
             closed = true;
             return null;
@@ -343,15 +411,15 @@ public class TakeService extends Service {
         @Override
         protected void onProgressUpdate(Long... values) {
             super.onProgressUpdate(values);
-            /** Экземпляр таймера с новыми параметрами */
+            *//** Экземпляр таймера с новыми параметрами *//*
             timerTake = new TimerTake(values[0], values[1]);
         }
-    }
+    }*/
 
     /**
      * Таймер для периода сьемки.
      */
-    public class TimerTake extends CountDownTimer {
+    /*public class TimerTake extends CountDownTimer {
         private boolean start = false;
 
         public TimerTake(long millisInFuture, long countDownInterval) {
@@ -384,6 +452,19 @@ public class TakeService extends Service {
             return start;
         }
 
+    }*/
+
+    public class TakeTimer extends Timer{
+
+    }
+
+    public class TimerTakeTask extends TimerTask{
+
+        @Override
+        public void run() {
+            /** Сделать фото*/
+            takeImage();
+        }
     }
 
 }

@@ -1,8 +1,6 @@
 package com.kostya.webcam;
 
-import android.accounts.*;
 import android.accounts.OperationCanceledException;
-import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -10,42 +8,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
-import android.media.MediaScannerConnection;
 //import android.media.audiofx.EnvironmentalReverb;
-import android.net.Uri;
-import android.os.*;
 //import android.os.Handler;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.SurfaceView;
-import android.widget.Toast;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
-import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonGenerator;
-import com.google.api.client.json.JsonParser;
-import com.google.api.client.json.gson.GsonFactory;
 //import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.ParentReference;
 
-import java.io.*;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
 
 public class WebCamService extends Service {
     private final ThreadConnectDisk threadConnectDisk = new ThreadConnectDisk();

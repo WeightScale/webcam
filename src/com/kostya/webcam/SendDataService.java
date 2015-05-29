@@ -18,7 +18,8 @@ import java.util.*;
  */
 public class SendDataService extends Service {
     private final ThreadConnectDisk threadConnectDisk = new ThreadConnectDisk(this);
-    private final ThreadSendToDisk threadSendToDisk = new ThreadSendToDisk();
+    //private final ThreadSendToDisk threadSendToDisk = new ThreadSendToDisk();
+    private final ThreadSendToGoogleDrive threadSendToGoogleDrive = new ThreadSendToGoogleDrive();
     private Preferences preferences;
     private Internet internet;
     private Drive drive = null;
@@ -65,9 +66,9 @@ public class SendDataService extends Service {
         internet.disconnect();
         unregisterReceiver(broadcastReceiver);
         threadConnectDisk.cancel(true);
-        threadSendToDisk.cancel(true);
+        threadSendToGoogleDrive.cancel();
         while (!threadConnectDisk.closed) ;
-        while (!threadSendToDisk.closed) ;
+        while (threadSendToGoogleDrive.isStart());
     }
 
     /** Сохраняем фаил на Google drive.
@@ -133,7 +134,6 @@ public class SendDataService extends Service {
      */
     public class ThreadConnectDisk extends AsyncTask<Void, Long, Boolean> {
         private boolean closed = true;
-
         final Context context;
 
         ThreadConnectDisk(Context c) {
@@ -267,7 +267,7 @@ public class SendDataService extends Service {
             super.onPostExecute(aVoid);
             if (aVoid) {
                 flag_drive_build = true;
-                threadSendToDisk.execute();
+                threadSendToGoogleDrive.start();
                 startService(new Intent(getApplicationContext(), TakeService.class).setAction("start"));
             } else {
                 sendBroadcast(new Intent(Internet.INTERNET_DISCONNECT));
@@ -278,7 +278,79 @@ public class SendDataService extends Service {
 
     }
 
-    public class ThreadSendToDisk extends AsyncTask<Void, Long, Void> {
+    public class ThreadSendToGoogleDrive extends Thread{
+        private boolean start;
+        private boolean cancelled;
+
+        @Override
+        public synchronized void start() {
+            super.start();
+            start = true;
+        }
+
+        @Override
+        public void run() {
+            while (!cancelled) {
+
+                try { Thread.sleep(20); } catch (InterruptedException e) {}
+
+                long difference = System.currentTimeMillis();
+                sendBroadcast(new Intent(Internet.INTERNET_CONNECT));
+                while (!cancelled) {
+
+                    try { Thread.sleep(20); } catch (InterruptedException e) { }
+
+                    if (!Internet.isOnline())
+                        continue;
+                    String parentId = null;
+                    try {
+                        com.google.api.services.drive.model.File folderRoot = utilityDriver.getFolder(Main.LOCATE_FOLDER_PATH, null);
+                        parentId = folderRoot.getId();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    try {
+                        scanDirectory(Main.path, parentId);//todo
+                    } catch (Exception e) {
+                        //this.cancel(false);
+                        stopSelf();
+                        break;
+                    }
+                     setErrorTimeTake(System.currentTimeMillis() - difference);
+                    if (cancelled)
+                        break;
+
+                    break;
+                }
+            }
+            start = false;
+        }
+
+        private void cancel() {
+            cancelled = true;
+        }
+
+        public boolean isStart() {
+            return start;
+        }
+
+        /** Устанавливаем время превышающее время задержки таймера
+         * @param errorTimeTake Время используемое.
+         * @return true - errorTimeTake превышает периода сьемки.
+         */
+        public boolean setErrorTimeTake(long errorTimeTake) {
+            long time = errorTimeTake - (Long.parseLong(preferences.read(getString(R.string.key_period_take), "10")) * 1000);
+            if (time > 0) {
+                Main.error_time_take = time;
+                return true;
+            }else
+                Main.error_time_take = 0;
+            return false;
+        }
+    }
+
+    /*public class ThreadSendToDisk extends AsyncTask<Void, Long, Void> {
         private boolean closed = true;
 
         @Override
@@ -287,7 +359,7 @@ public class SendDataService extends Service {
             closed = false;
         }
 
-       /* @Override
+       *//* @Override
         protected Void doInBackground(Void... params) {
             while(!isCancelled()){
                 try {Thread.sleep(20);} catch(InterruptedException e) {}
@@ -323,7 +395,7 @@ public class SendDataService extends Service {
             }
             closed = true;
             return null;
-        }*/
+        }*//*
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -376,7 +448,7 @@ public class SendDataService extends Service {
             else
                 Main.error_time_take = 0;
         }
-    }
+    }*/
 
     void startActivityParameter(String code, String massage) {
         Intent intent = new Intent(getBaseContext(), ActivityGoogleDrivePreference.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
